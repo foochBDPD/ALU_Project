@@ -1,10 +1,12 @@
 library IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
-USE STD.TEXTIO.ALL;
-USE WORK.PKG_TESTBENCH.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE WORK.PKG_TESTBENCH.ALL;
+
+
 USE IEEE.STD_LOGIC_MISC.ALL;
+USE STD.TEXTIO.ALL;
 
 entity alu_testbench is
 	generic (
@@ -108,7 +110,7 @@ begin
     variable v_read_data : std_logic_vector(7 downto 0); 	
 		
   ---------------------------------------------		
-  -- Procedures		
+  -- Procedures	for TestBench	
   ---------------------------------------------	
   procedure parse_command(variable this_line : line) is 
 	variable v_cmd      : string(1 to 32);

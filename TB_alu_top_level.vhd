@@ -1,8 +1,8 @@
 library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use std.textio.all;
-use work.pkg_testbench.all;
-use ieee.numeric_std.all;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE STD.TEXTIO.ALL;
+USE WORK.PKG_TESTBENCH.ALL;
+USE IEEE.NUMERIC_STD.ALL;
 USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 USE IEEE.STD_LOGIC_MISC.ALL;
 
@@ -16,13 +16,12 @@ entity alu_testbench is
 		);
 	port (
         tb_clk                 : out      std_logic;                      -- Clock signal
-        tb_reg_a               : out      std_logic_vector(7 downto 0);   -- Input register A to alu_top_level
-        tb_reg_b               : out      std_logic_vector(7 downto 0);   -- Input register B to alu_top_level
-		tb_alu_output          : inout       std_logic_vector(7 downto 0);   -- Output of "alu_top_level" for test bench to print to screen
+       
+		tb_alu_output          : inout    std_logic_vector(7 downto 0);   -- Output of "alu_top_level" for test bench to print to screen
 		
-		tb_instr_ram_data_in   : out      std_logic_vector(G_RAM_DATA_SIZE - 1 downto 0) := (others => '0');
-		tb_instr_ram_addr      : out      unsigned(g_RAM_ADDR_SIZE - 1 downto 0) := (others => '0');
-		tb_dp_instr_ram_we     : out      std_logic := '0'
+		tb_instr_ram_data_in   : out      std_logic_vector(g_RAM_DATA_SIZE - 1 downto 0) := (others => '0');
+		tb_instr_ram_addr      : out      unsigned        (g_RAM_ADDR_SIZE - 1 downto 0) := (others => '0');
+		tb_dp_instr_ram_we     : out      std_logic                                      :=            '0'
 		);
 end entity alu_testbench;
 
@@ -45,10 +44,7 @@ architecture TB of alu_testbench is
   --time constants
   constant sim_time_limit    : time    := 1000 ns;  -- Simulation time limit (adjust as needed)
   constant clock_period      : time    := 10 ns;  -- Desired clock period (adjust as needed)
-  
-  
-  --   n/a
-    
+       
   ---------------------------------------
   -- Components
   ---------------------------------------
@@ -60,9 +56,8 @@ architecture TB of alu_testbench is
   ---------------------------------------
 	
 	signal testname      : string(1 to 64)              := (others => ' ');
-	signal clock_internal  : std_logic;
+	signal clock_internal  : std_logic := '0';
 	signal instr_command : std_logic_vector(7 downto 0) := (others => '0');
-	
 
   ---------------------------------------
   -- Procedures
@@ -77,9 +72,8 @@ begin
 		UUT : entity work.ALU_1 
 			port map(
 				clk           => tb_clk,										--clock driving from "alu_top_level_tb.vhd" to UUT(alu_top_level.vhd)
-				reg_a         => tb_reg_a,										--reg_a data from "alu_command_file.txt" being sent to UUT(alu_top_level.vhd)
-				reg_b         => tb_reg_b,										--reg_b data from "alu_command_file.txt" being sent to UUT(alu_top_level.vhd)
-				 alu_output    => tb_alu_output,							--Operation output from UUT(alu_top_level.vhd) to be displayed on screen by Test Bench
+				
+				alu_output    => tb_alu_output,							--Operation output from UUT(alu_top_level.vhd) to be displayed on screen by Test Bench
 								
 				instr_ram_data_in => tb_instr_ram_data_in,
 				instr_ram_addr    => tb_instr_ram_addr,
@@ -108,18 +102,15 @@ begin
   ---------------------------------------
   
   Proc_Alu_Run_Test : process is
+  
     file test_input_file : text open read_mode is g_command_file;
     variable v_file_line : line;
-
     variable v_read_data : std_logic_vector(7 downto 0); 	
-	
-	
+		
   ---------------------------------------------		
   -- Procedures		
   ---------------------------------------------	
   procedure parse_command(variable this_line : line) is 
-	 
-	
 	variable v_cmd      : string(1 to 32);
 	variable v_arg1      : string(1 to 32);	
 	variable v_arg2      : string(1 to 32);	
@@ -132,9 +123,11 @@ begin
 		sread(v_file_line, v_cmd, v_cmd_len);
 		if v_cmd_len > 0 then
 			if v_cmd(1) /= '#' then 
-				if v_cmd(1 to v_cmd_len) = "STR" then 
+				if v_cmd(1 to v_cmd_len) = "STR" then
+					--tb_instr_ram_data_in <=
 					sread(v_file_line, v_arg1, v_arg1_len);
 					sread(v_file_line, v_arg2, v_arg2_len);
+					
 				end if;
 			end if;
 			 print("MADE IT TO THE PARSE COMMAND");
@@ -146,11 +139,7 @@ begin
 -----------------------------------------------------------------  
 -- Testbench
 -----------------------------------------------------------------  
-  	
-	  
-
-
-		begin  --Test Bench Here
+  		begin  --Test Bench Here
 		wait for 1 fs;
 		while not endfile(test_input_file) loop
  			readline(test_input_file, v_file_line);                        --read the first line of the file "assembly_instr_input.txt"

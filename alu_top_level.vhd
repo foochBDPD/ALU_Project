@@ -1,11 +1,9 @@
---NOTE:
--- Once std_logic_unsigned was dropped and inputs/outputs with their respective
--- Signals were changed to integers, synthesis worked. Not yet simulated...next step
+
 library IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 USE IEEE.STD_LOGIC_MISC.ALL;
-
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity ALU_1 is
 Generic (
          g_reg_size    : integer := 4;           -- Not Used. Will leave in here for now in case needed 
@@ -13,45 +11,50 @@ Generic (
          g_operation   : string  := "TEST VALUE" -- Input for Addition, Subtraction, Multiplication, or Division
         );
 Port(   
-     i_Clk     : in  std_logic; --clock signal
-     i_RegA    : in  integer;   -- Input register A
-     i_RegB    : in  integer;   -- Input register B
-     o_Result  : out integer    -- output of ALU
-     );
+     clk     : in  std_logic; --clock signal
+     reg_a    : in  std_logic_vector(7 downto 0);   -- Input register A
+     reg_b    : in  std_logic_vector(7 downto 0);   -- Input register B
+     alu_output  : out std_logic_vector(7 downto 0);    -- output of ALU
+	 
+	 instr_ram_data_in : in std_logic_vector(32  - 1 downto 0) := (others => '0');
+	 instr_ram_addr    : in unsigned(6 - 1 downto 0) := (others => '0');
+	 instr_ram_we        : in std_logic := '0'
+		);
+     
 end ALU_1;
 
 architecture Behavioral of ALU_1 is
 
 -------------------------- Signal Declarations --------------------------
-signal s_RegA   : integer;
-signal s_RegB   : integer;
-signal s_Result : integer;
+signal s_reg_a   : std_logic_vector(7 downto 0); 
+signal s_reg_b   : std_logic_vector(7 downto 0); 
+signal s_alu_output : std_logic_vector(7 downto 0); 
 
 
 BEGIN
 
 ------------------------- Process Section -------------------------
-process(i_Clk)
+process(clk)
 begin
-if(rising_edge(i_Clk)) then 
+if(rising_edge(clk)) then 
     if g_operation = "ADD" then
-        s_Result <= s_RegA + s_RegB;     -- Addition Operation
+        s_alu_output <= s_reg_a + s_reg_b;     -- Addition Operation
     elsif g_operation = "Subtract" then
-        s_Result <= s_RegA - s_RegB;     -- Subtraction Operation
+        s_alu_output <= s_reg_a - s_reg_b;     -- Subtraction Operation
     elsif g_operation = "Multiply" then
-        s_Result <= s_RegA * s_RegB;     -- Multiplication Operation
+       -- s_alu_output <= s_reg_a * s_reg_b;     -- Multiplication Operation
     elsif g_operation = "Divide" then
-        s_Result <= s_RegA / s_RegB;     -- Division
+       -- s_alu_output <= s_reg_a / s_reg_b;     -- Division
     else 
-        s_Result <= s_RegA + s_RegB;     -- Default is to perform Addition Operation
+        s_alu_output <= s_reg_a + s_reg_b;     -- Default is to perform Addition Operation
     end if;      
 end if;
 end process;   
 
 
 ------------------------- Logic Section -------------------------
-s_RegA   <= i_RegA;
-s_RegB   <= i_RegB;
-o_Result <= s_Result;
+s_reg_a <= reg_a;
+s_reg_b <= reg_b;
+alu_output <= s_alu_output;
 
 end Behavioral;

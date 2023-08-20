@@ -28,19 +28,42 @@ signal s_reg_a         : std_logic_vector(g_REG_SIZE - 1 downto 0) := x"01";
 signal s_reg_b         : std_logic_vector(g_REG_SIZE - 1 downto 0) := x"02"; 
 signal s_alu_output    : std_logic_vector(7 downto 0)              := x"00";
 
- Command_Ram : entity work.dp_ram
-	generic map(
-		simulation  => false,
-		output_regs => false
-		addr_width => g_ram_addr_size,
-		data_width => g_ram_data_size)
-	port map (
-		p1_clk => clk_in
+--RAM Signals 
+--signal instr_ram_we : std_logic;
+--signal instr_ram_data_in  : std_logic_vector(g_ram_data_size - 1 downto 0);
+signal instr_ram_data_out : string(1 to 3) := "000";
+--signal instr_ram_addr     : unsigned(g_ram_addr_size - 1 downto 0);
+
+--RAM Signals
+signal data_ram_we : std_logic;
+signal data_ram_data_in : std_logic_vector(g_RAM_DATA_SIZE - 1 downto 0);
+signal data_ram_data_out : std_logic_vector(g_RAM_DATA_SIZE - 1 downto 0);
+signal data_ram_addr : unsigned(g_RAM_ADDR_SIZE -1 downto 0);
+
 		
 	
 
 BEGIN
-
+ --Instantiate DUAL_PORT_RAM
+ Command_Ram : entity work.dp_ram
+	generic map(
+		simulation  => false,
+		output_regs => false,
+		addr_width => g_ram_addr_size,
+		data_width => g_ram_data_size)
+	port map (
+		p1_clk => clk,
+		p1_we  => instr_ram_we,
+		p1_addr => instr_ram_addr,
+		p1_din => instr_ram_data_in,
+		p1_dout => open,
+		
+		p2_clk => clk,
+		p2_we => '0',
+		p2_addr => data_ram_addr,
+		p2_din => (others => '0'),
+		p2_dout => data_ram_data_out);
+		
 ------------------------- Process Section -------------------------
 	process(clk)
 		begin

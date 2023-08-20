@@ -120,11 +120,11 @@ begin
   
 	begin 
 	
-		sread(v_file_line, v_cmd, v_cmd_len);
+		sread(v_file_line, v_cmd, v_cmd_len); --Read The first line
 		if v_cmd_len > 0 then
 			if v_cmd(1) /= '#' then 
 				if v_cmd(1 to v_cmd_len) = "STR" then
-					--tb_instr_ram_data_in <=
+					tb_instr_ram_data_in(31 downto 24) <= x"07";
 					sread(v_file_line, v_arg1, v_arg1_len);
 					sread(v_file_line, v_arg2, v_arg2_len);
 					
@@ -142,9 +142,9 @@ begin
   		begin  --Test Bench Here
 		wait for 1 fs;
 		while not endfile(test_input_file) loop
- 			readline(test_input_file, v_file_line);                        --read the first line of the file "assembly_instr_input.txt"
+ 			readline(test_input_file, v_file_line);                        
 			parse_command(v_file_line);
-			end loop;											     -- so we can use the read data
+			end loop;											     
 																	 
 		print(cr & "===> End of File Reached");
 		

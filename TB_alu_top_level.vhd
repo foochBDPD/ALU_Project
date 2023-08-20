@@ -111,10 +111,10 @@ begin
   -- Procedures	for TestBench	
   ---------------------------------------------	
   procedure parse_command(variable this_line : line) is 
-	variable v_cmd      : string(1 to 32);
-	variable v_arg1      : string(1 to 32);	
-	variable v_arg2      : string(1 to 32);	
-	variable v_cmd_len      : natural := 1;
+	variable v_cmd           : string(1 to 32);
+	variable v_arg1          : string(1 to 32);	
+	variable v_arg2          : string(1 to 32);	
+	variable v_cmd_len       : natural := 1;
 	variable v_arg1_len      : natural := 1;
 	variable v_arg2_len      : integer := 1;
   

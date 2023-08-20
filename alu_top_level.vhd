@@ -21,11 +21,23 @@ end entity ALU_1;
 
 architecture Behavioral of ALU_1 is
 
+
+
 -------------------------- Signal Declarations --------------------------
 signal s_reg_a         : std_logic_vector(g_REG_SIZE - 1 downto 0) := x"01"; 
 signal s_reg_b         : std_logic_vector(g_REG_SIZE - 1 downto 0) := x"02"; 
 signal s_alu_output    : std_logic_vector(7 downto 0)              := x"00";
 
+ Command_Ram : entity work.dp_ram
+	generic map(
+		simulation  => false,
+		output_regs => false
+		addr_width => g_ram_addr_size,
+		data_width => g_ram_data_size)
+	port map (
+		p1_clk => clk_in
+		
+	
 
 BEGIN
 
@@ -45,6 +57,7 @@ BEGIN
 					s_alu_output <= s_reg_a or s_reg_b;     -- Default is to perform Addition Operation
 				end if;      
 			end if;
+		alu_output <= s_alu_output;
 	end process;   
 
 end Behavioral;

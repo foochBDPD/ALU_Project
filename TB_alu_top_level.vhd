@@ -6,6 +6,7 @@ USE WORK.PKG_TESTBENCH.ALL;
 USE IEEE.STD_LOGIC_MISC.ALL;
 USE STD.TEXTIO.ALL;
 
+
 entity alu_testbench is
 	generic (
 		g_COMMAND_FILE : string := "alu_command_file.txt";
@@ -95,7 +96,9 @@ begin
         end loop;
         wait;
     end process;
-	
+ 
+
+   
 	
   ---------------------------------------
   -- Logic
@@ -117,16 +120,50 @@ begin
 	variable v_cmd_len       : natural := 1;
 	variable v_arg1_len      : natural := 1;
 	variable v_arg2_len      : integer := 1;
+	variable dp_LineStart    : integer := 0;
+	variable dp_LineEnd     : integer := 0;
   
 	begin 
 	
-		sread(v_file_line, v_cmd, v_cmd_len); --Read The first line
-		if v_cmd_len > 0 then
-			if v_cmd(1) /= '#' then 
-				if v_cmd(1 to v_cmd_len) = "STR" then
-					tb_instr_ram_data_in(31 downto 24) <= x"07";
-					sread(v_file_line, v_arg1, v_arg1_len);
-					sread(v_file_line, v_arg2, v_arg2_len);
+		sread(v_file_line, v_cmd, v_cmd_len); --Read first chunk until whitespace
+		
+		if v_cmd_len > 0 then --did we get anything at all?
+			if v_cmd(1) /= '#' then --make sure its not a comment
+				if  v_cmd(1 to v_cmd_len) = "STR"  then
+					dp_LineStart := 7;
+					dp_LineEnd   := 0;
+					clk_wait(tb_clk, 1);
+  					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= x"07";
+					clk_wait(tb_clk, 1);
+					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
+					dp_LineStart := 31;
+					dp_LineEnd   := 8;
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
+					clk_wait(tb_clk, 1);
+					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					tb_instr_ram_data_in <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
+					clk_wait(tb_clk, 1);
+				elsif v_cmd(1 to v_cmd_len) = "LDA"  then	
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
+					clk_wait(tb_clk, 1);
+					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
+					clk_wait(tb_clk, 1);
+				elsif v_cmd(1 to v_cmd_len) = "LDB"  then	
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
+					clk_wait(tb_clk, 1);
+					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
+					clk_wait(tb_clk, 1);
+				elsif v_cmd(1 to v_cmd_len) = "ADD" then
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
+					clk_wait(tb_clk, 1);
+				elsif v_cmd(1 to v_cmd_len) = "RES" then
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
+					clk_wait(tb_clk, 1);
+					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
+					clk_wait(tb_clk, 1);
 					
 				end if;
 			end if;
@@ -155,3 +192,4 @@ begin
 
 
 end architecture TB;
+ 

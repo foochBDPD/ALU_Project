@@ -200,9 +200,9 @@ begin
 					stb_dp_instr_ram_we <= '0'; --disable write
 					clk_wait(tb_clk, 1);
 					
-					--grab first LDA argument
+					--grab only LDA argument
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					address_tracker <= address_tracker - 20; --account for amt we will write
+					address_tracker <= address_tracker - 24; --account for amt we will write
 					clk_wait(tb_clk, 1);
 					
 					if address_tracker = 0 then --ckeck if we have space to write "000000"
@@ -219,8 +219,13 @@ begin
 							address_tracker <= 31;
 							clk_wait(tb_clk, 1); 
 					end if;
-				
-				
+					
+					--write 
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
+					stb_dp_instr_ram_we <= '1';
+					clk_wait(tb_clk, 1); --tick in write
+					stb_dp_instr_ram_we <= '0';
+					clk_wait(tb_clk, 1);
 				
 				-----LDB----
 				elsif v_cmd(1 to v_cmd_len) = "LDB"  then

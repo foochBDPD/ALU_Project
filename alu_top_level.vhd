@@ -53,7 +53,7 @@ BEGIN
 		data_width => g_ram_data_size)
 	port map (
 		p1_clk => clk,
-		p1_we  => '1',
+		p1_we  => '0',
 		p1_addr => instr_ram_addr,
 		p1_din => instr_ram_data_in,
 		p1_dout => open,

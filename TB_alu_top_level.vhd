@@ -146,7 +146,10 @@ begin
 						address_tracker <= 31;
 					end if;
 					
+					stb_dp_instr_ram_we <= '1';
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"07"; --write in STR command
+					clk_wait(tb_clk, 1);
+					stb_dp_instr_ram_we <= '0';
 					clk_wait(tb_clk, 1);
 										
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument

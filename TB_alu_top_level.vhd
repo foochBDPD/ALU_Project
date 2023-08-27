@@ -60,6 +60,11 @@ architecture TB of alu_testbench is
 	signal clock_internal  : std_logic := '0';
 	signal instr_command : std_logic_vector(7 downto 0) := (others => '0');
 
+
+    signal stb_instr_ram_data_in  : std_logic_vector(g_RAM_DATA_SIZE - 1 downto 0) := (others => '0');
+	signal stb_instr_ram_addr     : unsigned        (g_RAM_ADDR_SIZE - 1 downto 0) := (others => '0');
+	signal stb_dp_instr_ram_we    : std_logic                                      :=            '0';
+	signal address_tracker        : natural 		:= 0;
   ---------------------------------------
   -- Procedures
   ---------------------------------------
@@ -120,7 +125,7 @@ begin
 	variable v_cmd_len       : natural := 1;
 	variable v_arg1_len      : natural := 1;
 	variable v_arg2_len      : integer := 1;
-	variable dp_LineStart    : integer := 0;
+	variable dp_LineStart    : integer := 7;
 	variable dp_LineEnd     : integer := 0;
   
 	begin 
@@ -130,40 +135,46 @@ begin
 		if v_cmd_len > 0 then --did we get anything at all?
 			if v_cmd(1) /= '#' then --make sure its not a comment
 				if  v_cmd(1 to v_cmd_len) = "STR"  then
-					dp_LineStart := 7;
-					dp_LineEnd   := 0;
+					if (address_tracker + 7) >= 32 then       --ckeck if we have space to write
+						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+						address_tracker <= 0;
+					end if;
+					
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"07";
 					clk_wait(tb_clk, 1);
-  					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= x"07";
+					address_tracker <= address_tracker + 7; --update for next write QTY = 7
+					
 					clk_wait(tb_clk, 1);
+					
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
+					if (address_tracker + 6) >= 32 then       --ckeck if we have space to write
+						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+						address_tracker <= 0;
+					end if;
+					
 					dp_LineStart := 31;
 					dp_LineEnd   := 8;
+					clk_wait(tb_clk, 1);
+					
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len));
+					clk_wait(tb_clk, 1); --write in the data
+					
+					address_tracker <= address_tracker + 6; --update for next write QTY = 6
+					
+					
+					
+					
+					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
+					clk_wait(tb_clk, 1); --write the data in
+					
+					
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
 					clk_wait(tb_clk, 1);
-					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					
 					tb_instr_ram_data_in <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
 					clk_wait(tb_clk, 1);
-				elsif v_cmd(1 to v_cmd_len) = "LDA"  then	
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
-					clk_wait(tb_clk, 1);
-					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
-					clk_wait(tb_clk, 1);
-				elsif v_cmd(1 to v_cmd_len) = "LDB"  then	
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
-					clk_wait(tb_clk, 1);
-					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
-					clk_wait(tb_clk, 1);
-				elsif v_cmd(1 to v_cmd_len) = "ADD" then
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
-					clk_wait(tb_clk, 1);
-				elsif v_cmd(1 to v_cmd_len) = "RES" then
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_cmd(1 to v_cmd_len));
-					clk_wait(tb_clk, 1);
-					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
-					clk_wait(tb_clk, 1);
+				
 					
 				end if;
 			end if;
@@ -171,7 +182,8 @@ begin
 		end if;
 	 
 	end procedure parse_command;
-	
+
+
  
 -----------------------------------------------------------------  
 -- Testbench

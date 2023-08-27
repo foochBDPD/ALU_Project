@@ -135,7 +135,7 @@ begin
 		if v_cmd_len > 0 then --did we get anything at all?
 			if v_cmd(1) /= '#' then --make sure its not a comment
 				if  v_cmd(1 to v_cmd_len) = "STR"  then
-					if (address_tracker + 7) >= 32 then       --ckeck if we have space to write
+					if (address_tracker + 7) >= 31 then       --ckeck if we have space to write
 						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
 						address_tracker <= 0;
 					end if;
@@ -148,27 +148,25 @@ begin
 					
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
 					if (address_tracker + 24) >= 31 then       --ckeck if we have space to write
-						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
-						address_tracker <= 0;
+							dp_LineStart := 31;
+							dp_LineEnd   := 8;
+							clk_wait(tb_clk, 1);
+							tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len));
+							clk_wait(tb_clk, 1); --write in the data
+							stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+							address_tracker <= 0;
+						
 					end if;
 					
-					dp_LineStart := 31;
-					dp_LineEnd   := 8;
-					clk_wait(tb_clk, 1);
-					
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len));
-					clk_wait(tb_clk, 1); --write in the data
-					
-					address_tracker <= address_tracker + 6; --update for next write QTY = 6
-					
-					stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+											
+					--
 					dp_LineStart := 31;
 					dp_LineEnd   := 0;
 					
 					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
 					clk_wait(tb_clk, 1); --write the data in
-					
+					stb_instr_ram_addr <= stb_instr_ram_addr + 1;
 					
 				
 				

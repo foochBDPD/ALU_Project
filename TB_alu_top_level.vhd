@@ -1,3 +1,10 @@
+--Mike Palladino
+--ALU Project
+--
+--Date: 8-27-23
+--------------------
+
+
 library IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
@@ -56,9 +63,9 @@ architecture TB of alu_testbench is
   -- Signals
   ---------------------------------------
 	
-	signal testname      : string(1 to 64)              := (others => ' ');
+	signal testname        : string(1 to 64)              := (others => ' ');
 	signal clock_internal  : std_logic := '0';
-	signal instr_command : std_logic_vector(7 downto 0) := (others => '0');
+	signal instr_command   : std_logic_vector(7 downto 0) := (others => '0');
 
 
     signal stb_instr_ram_data_in  : std_logic_vector(g_RAM_DATA_SIZE - 1 downto 0) := (others => '0');
@@ -77,10 +84,8 @@ begin
 		--Instantiate the Unit under Test "alu_top_level.vhd" 
 		UUT : entity work.ALU_1 
 			port map(
-				clk           => tb_clk,										--clock driving from "alu_top_level_tb.vhd" to UUT(alu_top_level.vhd)
-				
-				alu_output    => tb_alu_output,							--Operation output from UUT(alu_top_level.vhd) to be displayed on screen by Test Bench
-								
+				clk               => tb_clk,										--clock driving from "alu_top_level_tb.vhd" to UUT(alu_top_level.vhd)
+				alu_output    	  => tb_alu_output,							--Operation output from UUT(alu_top_level.vhd) to be displayed on screen by Test Bench
 				instr_ram_data_in => tb_instr_ram_data_in,
 				instr_ram_addr    => tb_instr_ram_addr,
 				instr_ram_we      => tb_dp_instr_ram_we
@@ -96,10 +101,9 @@ begin
         while now < sim_time_limit loop
             clock_internal <= not clock_internal;
             tb_clk <= clock_internal;  -- Output the clock signal
-
             wait for clock_period / 2;  -- Half the period for 50% duty cycle
         end loop;
-        wait;
+        wait;--required wait statement
     end process;
  
 
@@ -130,22 +134,19 @@ begin
   
 	begin 
 	
-		sread(v_file_line, v_cmd, v_cmd_len); --Read first chunk until whitespace
+		sread(v_file_line, v_cmd, v_cmd_len); --Read first chunk of text in line
 		
-		if v_cmd_len > 0 then --did we get anything at all?
-			if v_cmd(1) /= '#' then --make sure its not a comment
+		if v_cmd_len > 0 then --did we get a chunk?
+			if v_cmd(1) /= '#' then --make sure chunk not a comment
 				if  v_cmd(1 to v_cmd_len) = "STR"  then
 					if (address_tracker + 7) >= 31 then       --ckeck if we have space to write
 						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
 						address_tracker <= 0;
 					end if;
-					
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"07";
 					clk_wait(tb_clk, 1);
 					address_tracker <= address_tracker + 7; --update for next write QTY = 7
-					
 					clk_wait(tb_clk, 1);
-					
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
 					if (address_tracker + 24) >= 31 then       --ckeck if we have space to write
 							dp_LineStart := 31;
@@ -155,23 +156,69 @@ begin
 							clk_wait(tb_clk, 1); --write in the data
 							stb_instr_ram_addr <= stb_instr_ram_addr + 1;
 							address_tracker <= 0;
-						
 					end if;
-					
-											
-					--
 					dp_LineStart := 31;
 					dp_LineEnd   := 0;
-					
 					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
 					clk_wait(tb_clk, 1); --write the data in
 					stb_instr_ram_addr <= stb_instr_ram_addr + 1;
-					
-				
-				
-					
 				end if;
+				
+				if  v_cmd(1 to v_cmd_len) = "LDA"  then
+					if (address_tracker + 7) >= 31 then       --ckeck if we have space to write
+						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+						address_tracker <= 0;
+					end if;
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"D9";
+					clk_wait(tb_clk, 1);
+					address_tracker <= address_tracker + 7; --update for next write QTY = 7
+					clk_wait(tb_clk, 1);
+					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
+					if (address_tracker + 24) >= 31 then       --ckeck if we have space to write
+							dp_LineStart := 27;
+							dp_LineEnd   := 8;
+							clk_wait(tb_clk, 1);
+							tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len));
+							clk_wait(tb_clk, 1); --write in the data
+							stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+							address_tracker <= 0;
+					end if;
+					dp_LineStart := 31;
+					dp_LineEnd   := 0;
+					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
+					clk_wait(tb_clk, 1); --write the data in
+					stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+				end if;
+				if  v_cmd(1 to v_cmd_len) = "LDB"  then
+					if (address_tracker + 7) >= 31 then       --ckeck if we have space to write
+						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+						address_tracker <= 0;
+					end if;
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"C2";
+					clk_wait(tb_clk, 1);
+					address_tracker <= address_tracker + 7; --update for next write QTY = 7
+					clk_wait(tb_clk, 1);
+					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
+					if (address_tracker + 24) >= 31 then       --ckeck if we have space to write
+							dp_LineStart := 31;
+							dp_LineEnd   := 8;
+							clk_wait(tb_clk, 1);
+							tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len));
+							clk_wait(tb_clk, 1); --write in the data
+							stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+							address_tracker <= 0;
+					end if;
+					dp_LineStart := 31;
+					dp_LineEnd   := 0;
+					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
+					clk_wait(tb_clk, 1); --write the data in
+					stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+				end if;
+				
+				
 			end if;
 			 print("MADE IT TO THE PARSE COMMAND");
 		end if;

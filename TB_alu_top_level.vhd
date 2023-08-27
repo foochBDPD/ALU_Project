@@ -103,7 +103,7 @@ begin
     end process;
  
 
-   
+   tb_instr_ram_addr <= stb_instr_ram_addr;
 	
   ---------------------------------------
   -- Logic
@@ -147,7 +147,7 @@ begin
 					clk_wait(tb_clk, 1);
 					
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					if (address_tracker + 6) >= 32 then       --ckeck if we have space to write
+					if (address_tracker + 24) >= 31 then       --ckeck if we have space to write
 						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
 						address_tracker <= 0;
 					end if;
@@ -161,19 +161,16 @@ begin
 					
 					address_tracker <= address_tracker + 6; --update for next write QTY = 6
 					
-					
-					
+					stb_instr_ram_addr <= stb_instr_ram_addr + 1;
+					dp_LineStart := 31;
+					dp_LineEnd   := 0;
 					
 					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
 					clk_wait(tb_clk, 1); --write the data in
 					
 					
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg1(1 to v_arg1_len));
-					clk_wait(tb_clk, 1);
-					
-					tb_instr_ram_data_in <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
-					clk_wait(tb_clk, 1);
+				
 				
 					
 				end if;

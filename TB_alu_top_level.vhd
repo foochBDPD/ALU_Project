@@ -311,10 +311,10 @@ begin
 				
 					--grab only RES argument
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					address_tracker <= address_tracker - 24; --account for amt we will write
+					address_tracker <= address_tracker - 8; --account for amt we will write
 					clk_wait(tb_clk, 1);
 					
-					if address_tracker = 0 then --ckeck if we have space to write 
+					if address_tracker >= 23 then --ckeck if we have space to write 
 							dp_LineStart := 23; --yes we have space so update bit address's
 							dp_LineEnd   := 0;
 							
@@ -330,8 +330,10 @@ begin
 					end if;
 					
 					--write 
-					dp_LineStart := 23; --yes we have space so update bit address's
-					dp_LineEnd   := 0;
+					address_tracker <= 8;
+					dp_LineStart := 31; --yes we have space so update bit address's
+					dp_LineEnd   := 8;
+					stb_instr_ram_addr <= stb_instr_ram_addr + 1;
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
 					stb_dp_instr_ram_we <= '1';
 					clk_wait(tb_clk, 1); --tick in write
@@ -342,6 +344,8 @@ begin
 				--stp
 				elsif  v_cmd(1 to v_cmd_len) = "STP"  then --Now we can check command
 					address_tracker <= address_tracker - 8;
+					dp_LineStart := 7; --yes we have space so update bit address's
+					dp_LineEnd   := 0;
 					clk_wait(tb_clk, 1);
 					--check if we need to iterate dp address
 					if address_tracker = 0 then       --ckeck if we have space to write--if not iterate address by 1

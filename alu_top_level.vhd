@@ -69,15 +69,15 @@ BEGIN
 		begin
 			if(rising_edge(clk)) then 
 				if  g_operation = "ADD" then
-					s_alu_output <= (s_reg_a) or (s_reg_b);     -- Addition Operation
+					s_alu_output <= (s_reg_a) or (s_reg_b);     
 				elsif g_operation = "Subtract" then
-					s_alu_output <= (s_reg_a) and (s_reg_b);     -- Subtraction Operation
+					s_alu_output <= (s_reg_a) and (s_reg_b);    
 				elsif g_operation = "Multiply" then
-					s_alu_output <= (s_reg_a) nor (s_reg_b);      -- Multiplication Operation
+					s_alu_output <= (s_reg_a) nor (s_reg_b);    
 				elsif g_operation = "Divide" then
-					s_alu_output <= (s_reg_a) nand (s_reg_b);      -- Division
+					s_alu_output <= (s_reg_a) nand (s_reg_b);      
 				else 
-					s_alu_output <= s_reg_a or s_reg_b;     -- Default is to perform Addition Operation
+					s_alu_output <= s_reg_a or s_reg_b;   
 				end if;      
 			end if;
 		alu_output <= s_alu_output;

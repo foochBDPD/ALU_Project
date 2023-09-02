@@ -118,10 +118,24 @@ begin
     file test_input_file : text open read_mode is g_command_file;
     variable v_file_line : line;
     variable v_read_data : std_logic_vector(7 downto 0); 	
-		
-  ---------------------------------------------		
+	
+		 ---------------------------------------------		
   -- Procedures	for TestBench	
   ---------------------------------------------	
+  
+  --hanle wrting to dp_ram 
+  procedure dp_ram_write_controller(
+		variable   dp_ram_y           : inout integer; 
+		variable   bits_written       : inout  integer;
+		variable   dp_bitPos_End      : inout integer) is
+	begin
+		
+		if dp_LineEnd - bits_written < 0 then --check if we are end of dp memory 32/32 bits written
+			dp_ram_y := dp_ram_y + 1;
+		end if;
+	end procedure;
+  
+  --Parser 
   procedure parse_command(variable this_line : line) is 
 	variable v_cmd           : string(1 to 32);
 	variable v_arg1          : string(1 to 32);	
@@ -139,43 +153,33 @@ begin
 		if v_cmd_len > 0 then --did we get a chunk?
 			if v_cmd(1) /= '#' then --make sure chunk not a comment
 				if  v_cmd(1 to v_cmd_len) = "STR"  then --Now we can check command
-					address_tracker <= address_tracker - 8; -- 31-8 = 23
+					dp_ram_write_controller(stb_instr_ram_addr, 8, dp_LineEnd);
 					clk_wait(tb_clk, 1);
-					if address_tracker = 0 then       --ckeck if we have space to write--if not iterate address by 1
-						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
-						address_tracker <= 31;
-					end if;
+					
 					--write in STR command
 					stb_dp_instr_ram_we <= '1'; --enable write
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"07"; 
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"07";
 					clk_wait(tb_clk, 1);
 					stb_dp_instr_ram_we <= '0'; --disable write
 					clk_wait(tb_clk, 1);
 					
 					--grab first str argument
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					address_tracker <= address_tracker - 23; --account for amt we will write --should == 0 here
+					dp_ram_write_controller(stb_instr_ram_addr, 24, dp_LineEnd);
 					clk_wait(tb_clk, 1);
 					
-					if address_tracker = 0 then --ckeck if we have space to write
-							dp_LineStart := 23; --yes we have space so update bit address's
-							dp_LineEnd   := 0;
-							
-							tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
-							stb_dp_instr_ram_we <= '1';
-							clk_wait(tb_clk, 1); --tick in write
-							stb_dp_instr_ram_we <= '0';
-							clk_wait(tb_clk, 1);
-							
-							stb_instr_ram_addr <= stb_instr_ram_addr + 1; 
-							address_tracker <= 31;
-							clk_wait(tb_clk, 1); 
-					end if;
 					
-					--grab second str argument
-					dp_LineStart := 31;
-					dp_LineEnd   := 0;
+					--write first agrument - 24 bits		
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
+					stb_dp_instr_ram_we <= '1';
+					clk_wait(tb_clk, 1); --tick in write
+					stb_dp_instr_ram_we <= '0';
+					clk_wait(tb_clk, 1);
+							
+					--grab the second agrument
 					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					dp_ram_write_controller(stb_instr_ram_addr, 32, dp_LineEnd);
+					
 					stb_dp_instr_ram_we <= '1';
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
 					clk_wait(tb_clk, 1); --write the data in
@@ -187,90 +191,75 @@ begin
 				
 				-----LDA----
 				elsif  v_cmd(1 to v_cmd_len) = "LDA"  then --Now we can check command
-					address_tracker <= address_tracker - 8;
+					dp_ram_write_controller(stb_instr_ram_addr, 8, dp_LineEnd);
 					clk_wait(tb_clk, 1);
-					if address_tracker = 0 then       --ckeck if we have space to write--if not iterate address by 1
-						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
-						address_tracker <= 31;
-					end if;
-					--write in LDA command
+					
+					--write in STR command
 					stb_dp_instr_ram_we <= '1'; --enable write
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"05"; 
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"07";
 					clk_wait(tb_clk, 1);
 					stb_dp_instr_ram_we <= '0'; --disable write
 					clk_wait(tb_clk, 1);
 					
-					--grab only LDA argument
+					--grab first str argument
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					address_tracker <= address_tracker - 24; --account for amt we will write
+					dp_ram_write_controller(stb_instr_ram_addr, 24, dp_LineEnd);
 					clk_wait(tb_clk, 1);
 					
-					if address_tracker = 0 then --ckeck if we have space to write "000000"
-							dp_LineStart := 23; --yes we have space so update bit address's
-							dp_LineEnd   := 0;
-							
-							tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
-							stb_dp_instr_ram_we <= '1';
-							clk_wait(tb_clk, 1); --tick in write
-							stb_dp_instr_ram_we <= '0';
-							clk_wait(tb_clk, 1);
-							
-							stb_instr_ram_addr <= stb_instr_ram_addr + 1; 
-							address_tracker <= 31;
-							clk_wait(tb_clk, 1); 
-					end if;
-					dp_LineStart := 23; --yes we have space so update bit address's
-					dp_LineEnd   := 0;
-					clk_wait(tb_clk, 1); --tick in write
-					--write 
+					
+					--write first agrument - 24 bits		
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
 					stb_dp_instr_ram_we <= '1';
 					clk_wait(tb_clk, 1); --tick in write
 					stb_dp_instr_ram_we <= '0';
+					clk_wait(tb_clk, 1);
+							
+					--grab the second agrument
+					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					dp_ram_write_controller(stb_instr_ram_addr, 32, dp_LineEnd);
+					
+					stb_dp_instr_ram_we <= '1';
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
+					clk_wait(tb_clk, 1); --write the data in
+					stb_dp_instr_ram_we <= '0';
+					stb_instr_ram_addr <= stb_instr_ram_addr + 1; 
 					clk_wait(tb_clk, 1);
 				
 				-----LDB----
 			elsif  v_cmd(1 to v_cmd_len) = "LDB"  then --Now we can check command
-					address_tracker <= address_tracker - 8;
+					dp_ram_write_controller(stb_instr_ram_addr, 8, dp_LineEnd);
 					clk_wait(tb_clk, 1);
-					if address_tracker = 0 then       --ckeck if we have space to write--if not iterate address by 1
-						stb_instr_ram_addr <= stb_instr_ram_addr + 1;
-						address_tracker <= 31;
-					end if;
-					--write in LDB command
+					
+					--write in STR command
 					stb_dp_instr_ram_we <= '1'; --enable write
-					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"06"; 
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= x"06";
 					clk_wait(tb_clk, 1);
 					stb_dp_instr_ram_we <= '0'; --disable write
 					clk_wait(tb_clk, 1);
 					
-					--grab only LDB argument
+					--grab first str argument
 					sread(v_file_line, v_arg1, v_arg1_len); --grab the first argument
-					address_tracker <= address_tracker - 23; --account for amt we will write
+					dp_ram_write_controller(stb_instr_ram_addr, 24, dp_LineEnd);
 					clk_wait(tb_clk, 1);
 					
-					if address_tracker = 0 then --ckeck if we have space to write 
-							dp_LineStart := 23; --yes we have space so update bit address's
-							dp_LineEnd   := 0;
-							
-							tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
-							stb_dp_instr_ram_we <= '1';
-							clk_wait(tb_clk, 1); --tick in write
-							stb_dp_instr_ram_we <= '0';
-							clk_wait(tb_clk, 1);
-							
-							stb_instr_ram_addr <= stb_instr_ram_addr + 1; 
-							address_tracker <= 31;
-							clk_wait(tb_clk, 1); 
-					end if;
 					
-					--write 
+					--write first agrument - 24 bits		
 					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd)  <= hstring2slv(v_arg1(1 to v_arg1_len)); --write in ar1
 					stb_dp_instr_ram_we <= '1';
 					clk_wait(tb_clk, 1); --tick in write
 					stb_dp_instr_ram_we <= '0';
 					clk_wait(tb_clk, 1);
-				
+							
+					--grab the second agrument
+					sread(v_file_line, v_arg2, v_arg2_len); --grab the second argument
+					dp_ram_write_controller(stb_instr_ram_addr, 32, dp_LineEnd);
+					
+					stb_dp_instr_ram_we <= '1';
+					tb_instr_ram_data_in(dp_LineStart downto dp_LineEnd) <= hstring2slv(v_arg2(1 to v_arg2_len)) ;
+					clk_wait(tb_clk, 1); --write the data in
+					stb_dp_instr_ram_we <= '0';
+					stb_instr_ram_addr <= stb_instr_ram_addr + 1; 
+					clk_wait(tb_clk, 1);
 			elsif  v_cmd(1 to v_cmd_len) = "ADD"  then --Now we can check command
 					address_tracker <= address_tracker - 8;
 					clk_wait(tb_clk, 1);
